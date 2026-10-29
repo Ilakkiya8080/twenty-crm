@@ -1,0 +1,116 @@
+---
+title: Quick Start
+icon: 'rocket'
+description: Create your first Twenty app with the standalone CLI.
+---
+
+Use Node.js 24.5+ and Yarn 4. Install the CLI globally; your app keeps its own SDK dependencies.
+
+## Create the project
+
+```bash
+npm install -g twenty
+twenty app init my-twenty-app
+cd my-twenty-app
+yarn install
+```
+
+`app init` writes the template only. It does not install dependencies, initialize Git, start Docker, authenticate, or sync. Customize the display name and description with `--display-name` and `--description`; use `--path` for a different destination.
+
+## Connect to Twenty
+
+Use an existing workspace, or start a [local server](/developers/extend/apps/getting-started/local-server), then sign in:
+
+```bash
+twenty auth login --url https://your-workspace.twenty.com --name dev
+```
+
+## Sync your changes
+
+For the first sync, explicitly allow registration and installation:
+
+```bash
+twenty app apply --create
+```
+
+Then start the development watcher:
+
+```bash
+twenty app dev
+```
+
+Use bounded commands for scripts and agents:
+
+```bash
+twenty app plan
+twenty app apply
+```
+
+`plan` previews changes. `apply` uploads and synchronizes once. Use `--no-delete` to keep remote entities missing from source, or `--yes` to permit object and field deletions without a prompt. All three commands require an authenticated remote and registration ownership.
+
+## What you can build
+
+Apps are composed of **entities** — each defined as a TypeScript file with a single `export default`:
+
+| Entity                 | What it does                                                                        |
+| ---------------------- | ----------------------------------------------------------------------------------- |
+| **Objects & Fields**   | Custom data models (Post Card, Invoice, etc.) with typed fields                     |
+| **Logic functions**    | Server-side TypeScript triggered by HTTP routes, cron schedules, or database events |
+| **Front components**   | React components that render inside Twenty's UI (side panel, widgets, command menu) |
+| **Skills & Agents**    | AI capabilities — reusable instructions and autonomous assistants                   |
+| **Views & Navigation** | Pre-configured list views and sidebar menu items                                    |
+| **Page layouts**       | Custom record detail pages with tabs and widgets                                    |
+
+Full reference: [Concepts](/developers/extend/apps/getting-started/concepts).
+
+## Build with AI agent skills
+
+Official Twenty [Agent Skills](https://skills.sh/) teach coding agents the full app workflow: scaffolding, entity development, sync and deploy operations, and marketplace publishing. They install into Claude Code, Codex, Cursor, Pi, and any other harness supported by the `skills` CLI, and work against any Twenty instance, including self-hosted custom domains and localhost.
+
+```bash filename="Terminal"
+# List the available skills
+npx skills add https://github.com/twentyhq/twenty/tree/agent-skills --list
+
+# Install the scaffolding and development skills
+npx skills add https://github.com/twentyhq/twenty/tree/agent-skills --skill create-app
+npx skills add https://github.com/twentyhq/twenty/tree/agent-skills --skill develop-app
+```
+
+Each skill installs with its own reference docs. The `agent-skills` branch becomes available after the first successful publish from `main`; before that, follow the [local build instructions](https://github.com/twentyhq/twenty/tree/main/packages/twenty-agent-skills#local-development).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Config"
+    icon="screwdriver-wrench"
+    href="/developers/extend/apps/config/overview"
+  >
+    Application identity, default role, install and uninstall hooks, public
+    assets.
+  </Card>
+  <Card
+    title="Data"
+    icon="database"
+    href="/developers/extend/apps/data/overview"
+  >
+    Objects, fields, and bidirectional relations.
+  </Card>
+  <Card title="Logic" icon="bolt" href="/developers/extend/apps/logic/overview">
+    Logic functions, skills, agents, and OAuth connections.
+  </Card>
+  <Card
+    title="Layout"
+    icon="table-columns"
+    href="/developers/extend/apps/layout/overview"
+  >
+    Views, navigation, page layouts, front components.
+  </Card>
+  <Card
+    title="Operations"
+    icon="rocket"
+    href="/developers/extend/apps/operations/overview"
+  >
+    CLI, testing, remotes, CI, and publishing your app.
+  </Card>
+</CardGroup>
