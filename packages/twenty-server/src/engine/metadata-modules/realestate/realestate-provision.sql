@@ -13,6 +13,7 @@ DECLARE
     opp_obj_id UUID;
     task_obj_id UUID;
     dash_obj_id UUID;
+    member_obj_id UUID;
     opp_stage_field_id UUID;
     deal_kanban_view_id UUID;
     lead_kanban_view_id UUID;
@@ -54,6 +55,20 @@ BEGIN
         SET "labelPlural" = 'Reports', "labelSingular" = 'Report', icon = 'IconChartPie', color = 'purple', "isActive" = true
         WHERE "workspaceId" = ws_id AND "nameSingular" = 'dashboard';
 
+        UPDATE core."objectMetadata"
+        SET "labelPlural" = 'Agents & Brokers', "labelSingular" = 'Agent', icon = 'IconUserCheck', color = 'purple', "isActive" = true, "isUICreatable" = true, "isUIEditable" = true, "isUIReadOnly" = false
+        WHERE "workspaceId" = ws_id AND "nameSingular" = 'workspaceMember';
+
+        UPDATE core."fieldMetadata"
+        SET "isUIEditable" = true
+        WHERE "objectMetadataId" = (SELECT id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'workspaceMember')
+          AND name IN ('name', 'jobTitle', 'userEmail', 'avatarUrl');
+
+        UPDATE core."fieldMetadata"
+        SET "isNullable" = true, "defaultValue" = '"uuid"'::jsonb
+        WHERE "objectMetadataId" = (SELECT id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'workspaceMember')
+          AND name = 'userId';
+
         -- Fetch Object IDs
         SELECT id INTO comp_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'company';
         SELECT id INTO person_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'person';
@@ -61,6 +76,10 @@ BEGIN
         SELECT id INTO opp_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'opportunity';
         SELECT id INTO task_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'task';
         SELECT id INTO dash_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'dashboard';
+
+
+
+        SELECT id INTO member_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'workspaceMember';
 
         -- 2. Update Stage options in fieldMetadata
         SELECT id INTO opp_stage_field_id FROM core."fieldMetadata"
@@ -78,7 +97,7 @@ BEGIN
             WHERE id = opp_stage_field_id;
         END IF;
 
-        -- 3. Configure Sidebar Navigation Menu
+        -- 3. Configure Sidebar Navigation Menu (Only for Real Estate CRM: includes Agents)
         DELETE FROM core."navigationMenuItem" WHERE "workspaceId" = ws_id;
 
         INSERT INTO core."navigationMenuItem" (id, "universalIdentifier", "workspaceId", "applicationId", "targetObjectMetadataId", position, type, color, icon, name, "createdAt", "updatedAt")
@@ -88,7 +107,8 @@ BEGIN
             (gen_random_uuid(), gen_random_uuid(), ws_id, app_id, note_obj_id, 2, 'OBJECT', 'sky', 'IconCalendarEvent', 'Site Visits', NOW(), NOW()),
             (gen_random_uuid(), gen_random_uuid(), ws_id, app_id, opp_obj_id, 3, 'OBJECT', 'green', 'IconCurrencyDollar', 'Deals', NOW(), NOW()),
             (gen_random_uuid(), gen_random_uuid(), ws_id, app_id, task_obj_id, 4, 'OBJECT', 'orange', 'IconPhoneCall', 'Follow-ups', NOW(), NOW()),
-            (gen_random_uuid(), gen_random_uuid(), ws_id, app_id, dash_obj_id, 5, 'OBJECT', 'purple', 'IconChartPie', 'Reports', NOW(), NOW());
+            (gen_random_uuid(), gen_random_uuid(), ws_id, app_id, dash_obj_id, 5, 'OBJECT', 'purple', 'IconChartPie', 'Reports', NOW(), NOW()),
+            (gen_random_uuid(), gen_random_uuid(), ws_id, app_id, member_obj_id, 6, 'OBJECT', 'purple', 'IconUserCheck', 'Agents', NOW(), NOW());
 
         -- 4. Invalidate Metadata Cache
         UPDATE core.workspace SET "metadataVersion" = "metadataVersion" + 1 WHERE id = ws_id;
