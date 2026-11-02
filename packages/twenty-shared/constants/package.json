@@ -1,0 +1,6 @@
+{
+  "main": "../dist/constants.cjs",
+  "module": "../dist/constants.mjs",
+  "types": "../dist/constants/index.d.ts"
+}
+

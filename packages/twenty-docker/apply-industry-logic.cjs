@@ -769,7 +769,7 @@ async function applyIndustry(industry, targetWorkspaceId) {
         WHERE "workspaceId" = '${wsId}' AND "nameSingular" = 'dashboard';
 
         UPDATE core."objectMetadata"
-        SET "labelPlural" = 'Agents & Brokers', "labelSingular" = 'Agent', icon = 'IconUserCheck', color = 'purple', "isActive" = true
+        SET "labelPlural" = 'Agents & Brokers', "labelSingular" = 'Agent', icon = 'IconUserCheck', color = 'purple', "isActive" = true, "isUICreatable" = true, "isUIEditable" = true, "isUIReadOnly" = false
         WHERE "workspaceId" = '${wsId}' AND "nameSingular" = 'workspaceMember';
 
         UPDATE core."objectMetadata"
@@ -796,6 +796,7 @@ async function applyIndustry(industry, targetWorkspaceId) {
       const oppObjId = metaMap['opportunity']; // Deals
       const taskObjId = metaMap['task']; // Follow-ups
       const dashObjId = metaMap['dashboard']; // Reports
+      const memberObjId = metaMap['workspaceMember']; // Agents
 
       let appId = null;
       const appRes = await c.query(`SELECT id FROM core."application" WHERE "workspaceId" = $1 LIMIT 1`, [wsId]);
@@ -935,7 +936,27 @@ async function applyIndustry(industry, targetWorkspaceId) {
         `, [dashObjId]);
       }
 
-      // 4. CLEAN AND RECONFIGURE NAVIGATION MENU ITEMS - EXACTLY THE 6 REAL ESTATE MODULES!
+      if (memberObjId) {
+        await c.query(`
+          UPDATE core."view"
+          SET name = 'All Agents', icon = 'IconUserCheck'
+          WHERE "objectMetadataId" = $1;
+        `, [memberObjId]);
+
+        await c.query(`
+          UPDATE core."fieldMetadata"
+          SET "isUIEditable" = true
+          WHERE "objectMetadataId" = $1 AND name IN ('name', 'jobTitle', 'userEmail', 'avatarUrl');
+        `, [memberObjId]);
+
+        await c.query(`
+          UPDATE core."fieldMetadata"
+          SET "isNullable" = true, "defaultValue" = '"uuid"'::jsonb
+          WHERE "objectMetadataId" = $1 AND name = 'userId';
+        `, [memberObjId]);
+      }
+
+      // 4. CLEAN AND RECONFIGURE NAVIGATION MENU ITEMS - REAL ESTATE MODULES (INCLUDING AGENTS ONLY FOR REAL ESTATE)
       await c.query(`DELETE FROM core."navigationMenuItem" WHERE "workspaceId" = $1;`, [wsId]);
 
       // In order requested by user:
@@ -945,6 +966,7 @@ async function applyIndustry(industry, targetWorkspaceId) {
       // 3: Deals (opportunity)
       // 4: Follow-ups (task)
       // 5: Reports (dashboard)
+      // 6: Agents (workspaceMember)
       const realEstateNav = [
         { objId: compObjId, name: 'Property Listings', color: 'turquoise', icon: 'IconBuildingSkyscraper', pos: 0 },
         { objId: personObjId, name: 'Buyers & Leads', color: 'blue', icon: 'IconUserCheck', pos: 1 },
@@ -952,6 +974,7 @@ async function applyIndustry(industry, targetWorkspaceId) {
         { objId: oppObjId, name: 'Deals', color: 'green', icon: 'IconCurrencyDollar', pos: 3 },
         { objId: taskObjId, name: 'Follow-ups', color: 'orange', icon: 'IconPhoneCall', pos: 4 },
         { objId: dashObjId, name: 'Reports', color: 'purple', icon: 'IconChartPie', pos: 5 },
+        { objId: memberObjId, name: 'Agents', color: 'purple', icon: 'IconUserCheck', pos: 6 },
       ];
 
       for (const item of realEstateNav) {

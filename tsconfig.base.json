@@ -13,7 +13,17 @@
     "lib": ["es2020", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "paths": {
+      "twenty-shared/*": [
+        "packages/twenty-shared/dist/*",
+        "packages/twenty-shared/src/*"
+      ],
+      "twenty-shared": [
+        "packages/twenty-shared/dist/index.d.ts",
+        "packages/twenty-shared/src/index.ts"
+      ]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

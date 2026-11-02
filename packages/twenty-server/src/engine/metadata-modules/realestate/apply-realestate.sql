@@ -40,6 +40,7 @@ DECLARE
     opp_obj_id UUID;
     task_obj_id UUID;
     dash_obj_id UUID;
+    member_obj_id UUID;
     opp_stage_field_id UUID;
     deal_kanban_view_id UUID;
     lead_kanban_view_id UUID;
@@ -150,8 +151,18 @@ BEGIN
 
         -- Agents / Team (workspaceMember)
         UPDATE core."objectMetadata"
-        SET "labelPlural" = 'Real Estate Agents', "labelSingular" = 'Agent', icon = 'IconUserCheck', color = 'purple', "isActive" = true
-        WHERE "workspaceId" = ws_id AND "nameSingular" = 'Real Estate Agents';
+        SET "labelPlural" = 'Agents & Brokers', "labelSingular" = 'Agent', icon = 'IconUserCheck', color = 'purple', "isActive" = true, "isUICreatable" = true, "isUIEditable" = true, "isUIReadOnly" = false
+        WHERE "workspaceId" = ws_id AND "nameSingular" = 'workspaceMember';
+
+        UPDATE core."fieldMetadata"
+        SET "isUIEditable" = true
+        WHERE "objectMetadataId" = (SELECT id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'workspaceMember')
+          AND name IN ('name', 'jobTitle', 'userEmail', 'avatarUrl');
+
+        UPDATE core."fieldMetadata"
+        SET "isNullable" = true, "defaultValue" = '"uuid"'::jsonb
+        WHERE "objectMetadataId" = (SELECT id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'workspaceMember')
+          AND name = 'userId';
 
         -- Deactivate clinical/manufacturing objects
         UPDATE core."objectMetadata"
@@ -162,12 +173,13 @@ BEGIN
         );
 
         -- Fetch Object IDs
-        SELECT id INTO comp_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'Property Listings';
-        SELECT id INTO person_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'Buyers & Leads';
-        SELECT id INTO note_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'Site Visits';
+        SELECT id INTO comp_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'company';
+        SELECT id INTO person_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'person';
+        SELECT id INTO note_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'note';
         SELECT id INTO opp_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'opportunity';
-        SELECT id INTO task_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'Follow-ups';
-        SELECT id INTO dash_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'Reports';
+        SELECT id INTO task_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'task';
+        SELECT id INTO dash_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'dashboard';
+        SELECT id INTO member_obj_id FROM core."objectMetadata" WHERE "workspaceId" = ws_id AND "nameSingular" = 'workspaceMember';
 
         -- 2. Update Stage options in fieldMetadata
         SELECT id INTO opp_stage_field_id FROM core."fieldMetadata"
@@ -261,7 +273,10 @@ BEGIN
         UPDATE core."view" SET name = 'Real Estate Reports & Analytics', icon = 'IconChartPie'
         WHERE "objectMetadataId" = dash_obj_id;
 
-        -- 4. Reconfigure Sidebar Navigation Menu (EXACTLY THE 6 REQUESTED MODULES IN ORDER)
+        UPDATE core."view" SET name = 'All Agents', icon = 'IconUserCheck'
+        WHERE "objectMetadataId" = member_obj_id;
+
+        -- 4. Reconfigure Sidebar Navigation Menu (REAL ESTATE MODULES INCLUDING AGENTS MODULE ONLY FOR REAL ESTATE)
         DELETE FROM core."navigationMenuItem" WHERE "workspaceId" = ws_id;
 
         -- Pos 0: Property Listings (company)
@@ -287,6 +302,10 @@ BEGIN
         -- Pos 5: Reports (dashboard)
         INSERT INTO core."navigationMenuItem" (id, "universalIdentifier", "workspaceId", "applicationId", "targetObjectMetadataId", position, type, color, icon, name, "createdAt", "updatedAt")
         VALUES (gen_random_uuid(), gen_random_uuid(), ws_id, app_id, dash_obj_id, 5, 'OBJECT', 'purple', 'IconChartPie', 'Reports', NOW(), NOW());
+
+        -- Pos 6: Agents (workspaceMember) - Only for Real Estate CRM
+        INSERT INTO core."navigationMenuItem" (id, "universalIdentifier", "workspaceId", "applicationId", "targetObjectMetadataId", position, type, color, icon, name, "createdAt", "updatedAt")
+        VALUES (gen_random_uuid(), gen_random_uuid(), ws_id, app_id, member_obj_id, 6, 'OBJECT', 'purple', 'IconUserCheck', 'Agents', NOW(), NOW());
 
         -- 5. Seed Real Real Estate Data into Schema
         IF db_schema IS NOT NULL THEN
