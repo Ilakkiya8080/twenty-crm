@@ -12,9 +12,9 @@ services:
       - ./apply-industry-logic.cjs:/app/apply-industry-logic.cjs
       - ./patch-main.js:/app/patch-main.js
       - ../twenty-front/src/assets:/app/industry-assets:ro
-    command: ["sh", "-c", "node /app/patch-main.js && exec node dist/main"]
+    command: ["sh", "-c", "node /app/patch-main.js || true; exec node dist/main"]
     ports:
-      - "3001:3000"
+      - "${SERVER_PORT:-3000}:3000"
     environment:
       NODE_PORT: 3000
       PG_DATABASE_URL: postgres://${PG_DATABASE_USER:-postgres}:${PG_DATABASE_PASSWORD:-postgres}@${PG_DATABASE_HOST:-db}:${PG_DATABASE_PORT:-5432}/${PG_DATABASE_NAME:-default}
