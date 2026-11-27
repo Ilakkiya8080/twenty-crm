@@ -66,7 +66,7 @@ const StyledCardsGrid = styled.div`
   }
 `;
 
-const StyledIndustryCard = styled.div<{ isSelected?: boolean }>`
+const StyledIndustryCard = styled.div<{ isSelected?: boolean; isDisabled?: boolean }>`
   align-items: center;
   background-color: ${({ isSelected }) =>
     isSelected
@@ -82,7 +82,9 @@ const StyledIndustryCard = styled.div<{ isSelected?: boolean }>`
       ? '0 0 0 3px rgba(37, 99, 235, 0.15)'
       : '0 2px 8px rgba(0, 0, 0, 0.04)'};
   box-sizing: border-box;
-  cursor: pointer;
+  cursor: ${({ isDisabled }) => (isDisabled ? 'not-allowed' : 'pointer')};
+  pointer-events: ${({ isDisabled }) => (isDisabled ? 'none' : 'auto')};
+  opacity: ${({ isDisabled, isSelected }) => (isDisabled && !isSelected ? 0.35 : 1)};
   display: flex;
   gap: ${themeCssVariables.spacing[3]};
   justify-content: flex-start;
@@ -284,6 +286,7 @@ export const CreateProfile = () => {
   const onSubmit: SubmitHandler<Form> = useCallback(
     async (data) => {
       try {
+        setIsNavigating(true);
         if (!currentWorkspaceMember?.id) {
           throw new Error(doNotTranslate('User is not logged in'));
         }
@@ -489,7 +492,9 @@ export const CreateProfile = () => {
                 <StyledIndustryCard
                   key={card.id}
                   isSelected={selectedIndustry === card.id}
+                  isDisabled={isSubmitting || isNavigating}
                   onClick={() =>
+                    !(isSubmitting || isNavigating) &&
                     setSelectedIndustry(
                       selectedIndustry === card.id ? null : card.id,
                     )
@@ -583,11 +588,16 @@ export const CreateProfile = () => {
       <OnboardingStepAnimatedItem index={3}>
         <StyledButtonContainer>
           <OnboardingRewardMainButton
-            label={t`Continue`}
+            label={
+              isSubmitting || isNavigating
+                ? t`Setting up ${selectedIndustry === 'manufacturing' ? 'Manufacturing' : selectedIndustry === 'healthcare' ? 'Healthcare' : selectedIndustry === 'realestate' ? 'Real Estate' : 'Custom'} CRM...`
+                : t`Continue`
+            }
             creditsReward={
               onboardingCreditsProgress.rewardCreditsByStep.createProfile
             }
-            disabled={!isValid || !selectedIndustry || isSubmitting || isNavigating}
+            disabled={!selectedIndustry || isSubmitting || isNavigating}
+            isLoading={isSubmitting || isNavigating}
             onClick={handleSubmit(onSubmit)}
           />
         </StyledButtonContainer>

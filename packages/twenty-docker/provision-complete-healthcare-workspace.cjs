@@ -1306,8 +1306,15 @@ async function provisionHealthcareModules(app, targetWorkspaceId, options = {}) 
       [wsId, JSON.stringify({ industry: 'healthcare', updatedAt: new Date().toISOString() })],
     );
 
-    // Bump metadataVersion + flush Redis + evict server local cache
-    await c.query(`UPDATE core.workspace SET "metadataVersion" = "metadataVersion" + 1 WHERE id = $1`, [wsId]);
+    // Bump metadataVersion + ensure workspace is ACTIVE and un-deleted + flush Redis + evict server local cache
+    await c.query(`
+      UPDATE core.workspace 
+      SET "metadataVersion" = "metadataVersion" + 1,
+          "activationStatus" = 'ACTIVE',
+          "deletedAt" = NULL
+      WHERE id = $1
+    `, [wsId]);
+    await c.query(`UPDATE core."userWorkspace" SET "deletedAt" = NULL WHERE "workspaceId" = $1`, [wsId]);
 
     try {
       const r = createClient({ url: process.env.REDIS_URL || 'redis://redis:6379' });

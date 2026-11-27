@@ -1796,8 +1796,15 @@ async function provisionManufacturingModules(app, targetWorkspaceId, options = {
     `);
     console.log('  [ok] Seeded realistic sample data across all 8 Manufacturing modules (Suppliers, Products, Raw Materials, Supplier Materials, BOM, Production Orders, Inventory, Quality Control).');
 
-    // Bump metadataVersion + flush Redis + evict server local cache
-    await c.query(`UPDATE core.workspace SET "metadataVersion" = "metadataVersion" + 1 WHERE id = $1`, [wsId]);
+    // Bump metadataVersion + ensure workspace is ACTIVE and un-deleted + flush Redis + evict server local cache
+    await c.query(`
+      UPDATE core.workspace 
+      SET "metadataVersion" = "metadataVersion" + 1,
+          "activationStatus" = 'ACTIVE',
+          "deletedAt" = NULL
+      WHERE id = $1
+    `, [wsId]);
+    await c.query(`UPDATE core."userWorkspace" SET "deletedAt" = NULL WHERE "workspaceId" = $1`, [wsId]);
 
     try {
       const r = createClient({ url: process.env.REDIS_URL || 'redis://redis:6379' });

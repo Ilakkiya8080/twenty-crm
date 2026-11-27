@@ -172,7 +172,7 @@ try {
             '{id:"healthcare",title:"Healthcare CRM",description:"Patients, Appointments, Doctors, Departments, Follow-ups, and Reports.",img:"/assets/healthcare.jpg"},' +
             '{id:"realestate",title:"Real Estate CRM",description:"Property Listings, Buyers & Leads, Site Visits, Deals, Follow-ups, and Reports.",img:"/assets/realestate.png"},' +
             '{id:"others",title:"Others",description:"Lead, Opportunity, Contact, Company, and Task.",img:"/assets/images.png"}' +
-            '].map(card=>(0,e.jsxs)("div",{onClick:()=>setSelectedIndustry(card.id),style:{display:"flex",alignItems:"center",gap:"12px",padding:"12px 16px",borderRadius:"8px",cursor:"pointer",boxSizing:"border-box",userSelect:"none",transition:"all 0.15s ease-in-out",backgroundColor:selectedIndustry===card.id?"#f5f7ff":"#ffffff",border:selectedIndustry===card.id?"2px solid #2563eb":"1px solid #e5e7eb",boxShadow:selectedIndustry===card.id?"0 0 0 3px rgba(37, 99, 235, 0.15)":"0 2px 8px rgba(0, 0, 0, 0.04)"},children:[' +
+            '].map(card=>(0,e.jsxs)("div",{onClick:()=>{if(l||Q)return;setSelectedIndustry(card.id)},style:{display:"flex",alignItems:"center",gap:"12px",padding:"12px 16px",borderRadius:"8px",cursor:(l||Q)?"not-allowed":"pointer",pointerEvents:(l||Q)?"none":"auto",opacity:(l||Q)&&selectedIndustry!==card.id?0.35:1,boxSizing:"border-box",userSelect:"none",transition:"all 0.15s ease-in-out",backgroundColor:selectedIndustry===card.id?"#f5f7ff":"#ffffff",border:selectedIndustry===card.id?"2px solid #2563eb":"1px solid #e5e7eb",boxShadow:selectedIndustry===card.id?"0 0 0 3px rgba(37, 99, 235, 0.15)":"0 2px 8px rgba(0, 0, 0, 0.04)"},children:[' +
             '(0,e.jsx)("img",{src:card.img,alt:card.title,style:{width:"48px",height:"48px",borderRadius:"6px",objectFit:"cover",flexShrink:0}}),' +
             '(0,e.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"4px"},children:[' +
             '(0,e.jsx)("span",{style:{fontSize:"13px",fontWeight:600,color:"#111"},children:card.title}),' +
@@ -185,7 +185,7 @@ try {
             'onChange:r,placeholder:s._({id:"w3CVxK"}),fullWidth:!0})})' + cardsJsx + ']})}),(0,e.jsx)(y,{index:3'
           );
           if (code.includes('disabled:!z||Q||l')) {
-            code = code.replace('disabled:!z||Q||l', 'disabled:!selectedIndustry||Q||l');
+            code = code.replace('disabled:!z||Q||l', 'disabled:!selectedIndustry||Q||l,isLoading:l||Q');
           }
           fs.writeFileSync(cpPath, code, 'utf8');
           console.log('Successfully patched ' + cpFile + ' with Industry Selector cards!');
@@ -202,8 +202,24 @@ try {
           code = code.replace('setTimeout(()=>window.location.reload(),500)', 'window.location.href="/"');
           updated = true;
         }
+        if (code.includes('onClick:()=>setSelectedIndustry(card.id)')) {
+          code = code.replace('onClick:()=>setSelectedIndustry(card.id)', 'onClick:()=>{if(l||Q)return;setSelectedIndustry(card.id)}');
+          updated = true;
+        }
+        if (code.includes('cursor:"pointer",boxSizing')) {
+          code = code.replace('cursor:"pointer",boxSizing', 'cursor:(l||Q)?"not-allowed":"pointer",pointerEvents:(l||Q)?"none":"auto",opacity:(l||Q)&&selectedIndustry!==card.id?0.35:1,boxSizing');
+          updated = true;
+        }
+        if (code.includes('disabled:!selectedIndustry||Q||l,onClick')) {
+          code = code.replace('disabled:!selectedIndustry||Q||l,onClick', 'disabled:!selectedIndustry||Q||l,isLoading:l||Q,onClick');
+          updated = true;
+        }
+        if (code.includes('label:s._({id:"xGVfLh"})')) {
+          code = code.replace('label:s._({id:"xGVfLh"})', 'label:(l||Q)?("Setting up "+(selectedIndustry==="manufacturing"?"Manufacturing":selectedIndustry==="healthcare"?"Healthcare":selectedIndustry==="realestate"?"Real Estate":"Custom")+" CRM..."):s._({id:"xGVfLh"})');
+          updated = true;
+        }
         if (code.includes('disabled:!z||Q||l')) {
-          code = code.replace('disabled:!z||Q||l', 'disabled:!selectedIndustry||Q||l');
+          code = code.replace('disabled:!z||Q||l', 'disabled:!selectedIndustry||Q||l,isLoading:l||Q');
           updated = true;
         }
         // Remove any invalid useEffect hooks in const declaration
