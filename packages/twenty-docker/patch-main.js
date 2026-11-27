@@ -152,10 +152,9 @@ try {
         const formEndTarget = 'onChange:r,placeholder:s._({id:"w3CVxK"}),fullWidth:!0})})]})}),(0,e.jsx)(y,{index:3';
 
         if (code.includes(stateTarget) && code.includes(submitTarget) && code.includes(depsTarget) && code.includes(formEndTarget)) {
-          const effectHook = '(0,S.useEffect)(()=>{if(a?.name?.firstName){window.location.href="/";}},[a?.name?.firstName]);';
           code = code.replace(
             stateTarget,
-            '[l,o]=(0,S.useState)(!1),[selectedIndustry,setSelectedIndustry]=(0,S.useState)(null),' + effectHook
+            '[l,o]=(0,S.useState)(!1),[selectedIndustry,setSelectedIndustry]=(0,S.useState)(null),'
           );
           code = code.replace(
             submitTarget,
@@ -207,11 +206,11 @@ try {
           code = code.replace('disabled:!z||Q||l', 'disabled:!selectedIndustry||Q||l');
           updated = true;
         }
-        const effectHook = '(0,S.useEffect)(()=>{if(a?.name?.firstName){window.location.href="/";}},[a?.name?.firstName]);';
-        if (!code.includes('if(a?.name?.firstName)')) {
-          const insertTarget = '[selectedIndustry,setSelectedIndustry]=(0,S.useState)(null),';
-          if (code.includes(insertTarget)) {
-            code = code.replace(insertTarget, insertTarget + effectHook);
+        // Remove any invalid useEffect hooks in const declaration
+        if (code.includes('useEffect')) {
+          const cleaned = code.replace(/,\(0,S\.useEffect\)\(\(\)=>\{if\(a\?\.name\?\.firstName\)\{window\.location\.href="\/"[;]?\}\},\[a\?\.name\?\.firstName\]\);?/g, ',');
+          if (cleaned !== code) {
+            code = cleaned;
             updated = true;
           }
         }
