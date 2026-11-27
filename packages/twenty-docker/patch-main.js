@@ -152,13 +152,14 @@ try {
         const formEndTarget = 'onChange:r,placeholder:s._({id:"w3CVxK"}),fullWidth:!0})})]})}),(0,e.jsx)(y,{index:3';
 
         if (code.includes(stateTarget) && code.includes(submitTarget) && code.includes(depsTarget) && code.includes(formEndTarget)) {
+          const effectHook = '(0,S.useEffect)(()=>{if(a?.name?.firstName){window.location.href="/";}},[a?.name?.firstName]);';
           code = code.replace(
             stateTarget,
-            '[l,o]=(0,S.useState)(!1),[selectedIndustry,setSelectedIndustry]=(0,S.useState)(null),'
+            '[l,o]=(0,S.useState)(!1),[selectedIndustry,setSelectedIndustry]=(0,S.useState)(null),' + effectHook
           );
           code = code.replace(
             submitTarget,
-            'j(t=>w(t)?{...t,firstName:r.firstName,lastName:r.lastName}:t),selectedIndustry&&(await fetch("/api/industry-template",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({industry:selectedIndustry,workspaceId:a?.workspaceId})}).catch(err=>console.error("Failed to apply industry template",err)),setTimeout(()=>window.location.reload(),500)),b("createProfile",'
+            'j(t=>w(t)?{...t,firstName:r.firstName,lastName:r.lastName}:t),selectedIndustry&&(await fetch("/api/industry-template",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({industry:selectedIndustry,workspaceId:a?.workspaceId})}).catch(err=>console.error("Failed to apply industry template",err)),window.location.href="/"),b("createProfile",'
           );
           code = code.replace(
             depsTarget,
@@ -184,20 +185,42 @@ try {
             formEndTarget,
             'onChange:r,placeholder:s._({id:"w3CVxK"}),fullWidth:!0})})' + cardsJsx + ']})}),(0,e.jsx)(y,{index:3'
           );
+          if (code.includes('disabled:!z||Q||l')) {
+            code = code.replace('disabled:!z||Q||l', 'disabled:!selectedIndustry||Q||l');
+          }
           fs.writeFileSync(cpPath, code, 'utf8');
           console.log('Successfully patched ' + cpFile + ' with Industry Selector cards!');
         } else {
           console.warn('CreateProfile bundle anchors did not match; skipping frontend patch.');
         }
-      } else if (!code.includes('window.location.reload()')) {
-        code = code.replace(
-          'console.error("Failed to apply industry template",err))),b("createProfile",',
-          'console.error("Failed to apply industry template",err)),setTimeout(()=>window.location.reload(),500)),b("createProfile",'
-        );
-        fs.writeFileSync(cpPath, code, 'utf8');
-        console.log('Updated ' + cpFile + ' with post-provisioning reload!');
       } else {
-        console.log('CreateProfile bundle already patched.');
+        let updated = false;
+        if (code.includes('window.location.reload()')) {
+          code = code.replace(/window\.location\.reload\(\)/g, 'window.location.href="/"');
+          updated = true;
+        }
+        if (code.includes('setTimeout(()=>window.location.reload(),500)')) {
+          code = code.replace('setTimeout(()=>window.location.reload(),500)', 'window.location.href="/"');
+          updated = true;
+        }
+        if (code.includes('disabled:!z||Q||l')) {
+          code = code.replace('disabled:!z||Q||l', 'disabled:!selectedIndustry||Q||l');
+          updated = true;
+        }
+        const effectHook = '(0,S.useEffect)(()=>{if(a?.name?.firstName){window.location.href="/";}},[a?.name?.firstName]);';
+        if (!code.includes('if(a?.name?.firstName)')) {
+          const insertTarget = '[selectedIndustry,setSelectedIndustry]=(0,S.useState)(null),';
+          if (code.includes(insertTarget)) {
+            code = code.replace(insertTarget, insertTarget + effectHook);
+            updated = true;
+          }
+        }
+        if (updated) {
+          fs.writeFileSync(cpPath, code, 'utf8');
+          console.log('Updated ' + cpFile + ' with direct navigation to CRM root!');
+        } else {
+          console.log('CreateProfile bundle already patched.');
+        }
       }
     }
   }
