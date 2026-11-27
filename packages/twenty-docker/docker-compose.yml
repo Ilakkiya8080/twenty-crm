@@ -11,6 +11,9 @@ services:
       - ./provision-complete-healthcare-workspace.cjs:/app/provision-complete-healthcare-workspace.cjs
       - ./apply-industry-logic.cjs:/app/apply-industry-logic.cjs
       - ./patch-main.js:/app/patch-main.js
+      - ./test-manufacturing-crm.cjs:/app/test-manufacturing-crm.cjs
+      - ./test-healthcare-crm.cjs:/app/test-healthcare-crm.cjs
+      - ./verify-all-realestate-modules.cjs:/app/verify-all-realestate-modules.cjs
       - ../twenty-front/src/assets:/app/industry-assets:ro
     command: ["sh", "-c", "node /app/patch-main.js || true; exec node dist/main"]
     ports:
